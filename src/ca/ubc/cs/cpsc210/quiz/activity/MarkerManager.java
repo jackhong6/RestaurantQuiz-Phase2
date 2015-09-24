@@ -1,0 +1,92 @@
+package ca.ubc.cs.cpsc210.quiz.activity;
+
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+/**
+ * Created by pcarter on 14-11-06.
+ * <p/>
+ * Manager for markers plotted on map
+ */
+public class MarkerManager {
+    private GoogleMap map;
+    private Marker current;
+    private Marker previous;
+
+    /**
+     * Constructor initializes manager with map for which markers are to be managed.
+     *
+     * @param map the map for which markers are to be managed
+     */
+    public MarkerManager(GoogleMap map) {
+        this.map = map;
+    }
+
+    /**
+     * Add green marker to show position of restaurant
+     *
+     * @param point the point at which to add the marker
+     * @param title the marker's title
+     */
+    public void addRestaurantMarker(LatLng point, String title) {
+        previous = current;
+        removeMarkers();
+        MarkerOptions mo = new MarkerOptions().position(point)
+                .icon(BitmapDescriptorFactory.defaultMarker(120))
+                .title(title)
+                .alpha(0.7f);
+        map.addMarker(mo);
+    }
+
+    /**
+     * Add a marker to mark latest guess from user.  Only the most recent two positions selected
+     * by the user are marked.  The distance from the restaurant is used to create the marker's title
+     * of the form "xxxx m away" where xxxx is the distance from the restaurant in metres (truncated to
+     * an integer).
+     * <p/>
+     * The colour of the marker is based on the distance from the restaurant:
+     * - red, if the distance is 3km or more
+     * - somewhere between red (at 3km) and green (at 0m) (on a linear scale) for other distances
+     *
+     * @param latLng
+     * @param distance
+     */
+    public void addMarker(LatLng latLng, double distance) {
+        removeMarkers();
+        previous = current;
+
+        String text = (int) distance + "m away";
+        MarkerOptions mo = new MarkerOptions().position(latLng)
+                .icon(BitmapDescriptorFactory.defaultMarker(getColour(distance)))
+                .title(text)
+                .alpha(0.7f);
+        current = map.addMarker(mo);
+    }
+
+    /**
+     * Remove markers that mark user guesses from the map
+     */
+    public void removeMarkers() {
+        if (previous != null) {
+            previous.remove();
+        }
+    }
+
+    /**
+     * Produce a colour on a linear scale between red and green based on distance:
+     * <p/>
+     * - red, if distance is 3km or more
+     * - somewhere between red (at 3km) and green (at 0m) (on a linear scale) for other distances
+     *
+     * @param distance distance from restaurant
+     * @return colour of marker
+     */
+    private float getColour(double distance) {
+        if (distance >= 3000) return 0;
+        return 120 - (120 * ((float) distance / 3000));
+    }
+
+}
